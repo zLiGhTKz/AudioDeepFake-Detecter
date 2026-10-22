@@ -1,8 +1,13 @@
 import pytest
 
-from audiodeepfake.errors import ModelNotConfigured, UntrainedModelError
+from audiodeepfake.errors import UntrainedModelError
 from audiodeepfake.labels import label_from_filename, normalize_label, resolve_label_indices
-from audiodeepfake.model import ensure_finetuned_architecture, is_base_backbone, resolve_model_id
+from audiodeepfake.model import (
+    DEFAULT_MODEL_ID,
+    ensure_finetuned_architecture,
+    is_base_backbone,
+    resolve_model_id,
+)
 
 
 def test_normalize_public_dataset_labels():
@@ -37,10 +42,11 @@ def test_label_indexes_follow_config_names():
     assert (fake_index, real_index, explicit) == (0, 1, False)
 
 
-def test_backbone_is_rejected_without_downloading(monkeypatch):
+def test_default_model_and_backbone_rejection(monkeypatch):
     monkeypatch.delenv("AUDIODEEPFAKE_MODEL", raising=False)
-    with pytest.raises(ModelNotConfigured):
-        resolve_model_id(None)
+    assert resolve_model_id(None) == DEFAULT_MODEL_ID
+    monkeypatch.setenv("AUDIODEEPFAKE_MODEL", "   ")
+    assert resolve_model_id(None) == DEFAULT_MODEL_ID
     monkeypatch.setenv("AUDIODEEPFAKE_MODEL", "example/detector")
     assert resolve_model_id(None) == "example/detector"
     assert resolve_model_id(" other/model ") == "other/model"

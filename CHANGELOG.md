@@ -14,8 +14,11 @@ First packaged release. The Colab notebook is still in
 - Inference loads a fine-tuned model id from the Hugging Face Hub or a local
   folder. The base checkpoint `ntu-spml/distilhubert` is rejected for detection
   because it has no trained classifier.
-- No fine-tuned weights are published with this release, and this changelog
-  does not claim an accuracy number.
+- The CLI and the Gradio app default to
+  `lightk/audiodeepfake-detecter-laogao` (override with `--model` or
+  `AUDIODEEPFAKE_MODEL`). That checkpoint was trained on ASVspoof and then
+  fine-tuned on one speaker (`laogao`). It has not been evaluated on other
+  speakers. This changelog does not claim an accuracy number.
 - Added a Gradio app, pytest coverage with a fake model, Ruff, and GitHub
   Actions.
 

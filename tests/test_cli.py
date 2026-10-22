@@ -64,14 +64,27 @@ def test_cli_reports_unreadable_audio(monkeypatch, tmp_path: Path, capsys):
     assert payload["errors"]
 
 
-def test_missing_model_explains_how_to_train(monkeypatch, tmp_path: Path, capsys):
+def test_cli_uses_the_published_default(monkeypatch, tmp_path: Path, capsys):
     monkeypatch.delenv("AUDIODEEPFAKE_MODEL", raising=False)
+    loaded: dict[str, str] = {}
+
+    def fake_load(model_id, device=None):
+        loaded["id"] = model_id
+        return ConstantModel(logits=(-2.0, 2.0)), IdentityExtractor()
+
+    monkeypatch.setattr("audiodeepfake.detector.load_finetuned", fake_load)
     path = write_wav(tmp_path / "clip.wav", np.zeros(1600))
     code = main([str(path)])
     captured = capsys.readouterr()
-    assert code == 2
-    assert "audiodeepfake-train" in captured.err
-    assert "ntu-spml/distilhubert" in captured.err
+    assert code == 0
+    assert loaded["id"] == "lightk/audiodeepfake-detecter-laogao"
+    assert "real" in captured.out
+
+    loaded.clear()
+    monkeypatch.setenv("AUDIODEEPFAKE_MODEL", "example/other")
+    code = main([str(path), "--model", "example/flag"])
+    assert code == 0
+    assert loaded["id"] == "example/flag"
 
 
 def test_unknown_extension(tmp_path: Path, capsys):

@@ -23,9 +23,10 @@ from audiodeepfake.results import DetectionResult, SegmentResult
 class Detector:
     """Reusable deepfake scorer.
 
-    Pass ``model`` and ``feature_extractor`` in tests. Otherwise ``model_id``
-    (or ``AUDIODEEPFAKE_MODEL``) must name a fine-tuned Hugging Face repo or a
-    local ``save_pretrained`` folder.
+    Pass ``model`` and ``feature_extractor`` in tests. Otherwise the id comes
+    from ``model_id``, then ``AUDIODEEPFAKE_MODEL``, then the published default
+    ``lightk/audiodeepfake-detecter-laogao``. That default was fine-tuned on
+    one speaker. A local ``save_pretrained`` folder also works.
     """
 
     def __init__(

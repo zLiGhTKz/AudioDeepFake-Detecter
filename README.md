@@ -4,7 +4,7 @@
 
 Fine-tune DistilHuBERT to tell **real speech** from **AI-synthesized speech**, then score new clips from Python, the command line, or a Gradio page.
 
-**Status:** the code is ready to train. This repository does **not** ship fine-tuned weights, and it does **not** claim an accuracy number. `ntu-spml/distilhubert` is only the starting checkpoint. Detection refuses to load it, because that checkpoint has no deepfake classifier.
+**Status:** detection defaults to [`lightk/audiodeepfake-detecter-laogao`](https://huggingface.co/lightk/audiodeepfake-detecter-laogao). That checkpoint was trained on ASVspoof and then fine-tuned on one speaker (`laogao`). It is specialised to that speaker and has not been evaluated on other speakers. This README does not claim an accuracy number. `ntu-spml/distilhubert` is only the training backbone. Detection refuses to load it.
 
 The original Colab notebook is kept at [`notebooks/realdofinetuneV2.ipynb`](notebooks/realdofinetuneV2.ipynb). Use the commands below for anything you want to keep.
 
@@ -17,6 +17,23 @@ The original Colab notebook is kept at [`notebooks/realdofinetuneV2.ipynb`](note
 Label ids match the notebook: **0 = fake**, **1 = real**.
 
 A score is a model opinion about the audio it was trained on. It is not proof that a person is real or fake. See [Limitations](#limitations) and [Ethics](#ethics).
+
+## Pretrained model
+
+The default model id is `lightk/audiodeepfake-detecter-laogao`:
+
+<https://huggingface.co/lightk/audiodeepfake-detecter-laogao>
+
+It is a Transformers `HubertForSequenceClassification` checkpoint with a DistilHuBERT config. `id2label` is **0 = fake** and **1 = real**. The repo also includes `preprocessor_config.json`, so the feature extractor loads with the weights.
+
+How it was trained:
+
+1. Fine-tuned on ASVspoof.
+2. Fine-tuned further on recordings of one speaker, `laogao`.
+
+That second step makes the checkpoint speaker-specialised. It has **not** been evaluated on other speakers. There is no published accuracy, precision, recall, or F1 for this model. A score from it is not a general result for a new voice.
+
+`audiodeepfake-detect speech.wav` and the Gradio app load this repo unless you pass `--model` or set `AUDIODEEPFAKE_MODEL`. Use another fine-tuned repo id when you want a different model. The training backbone `ntu-spml/distilhubert` is still rejected, because it has no classifier.
 
 ## Install
 
@@ -39,15 +56,17 @@ wav, flac, and ogg are read with libsndfile. mp3, m4a, aac, and wma also need `f
 ## Detect
 
 ```bash
-audiodeepfake-detect speech.wav --model your-name/distilhubert-deepfake
-audiodeepfake-detect clips/ --model your-name/distilhubert-deepfake --json
+audiodeepfake-detect speech.wav
+audiodeepfake-detect clips/ --json
 ```
+
+Those commands use `lightk/audiodeepfake-detecter-laogao`. Read [Pretrained model](#pretrained-model) before you trust a score: that checkpoint was fine-tuned on one speaker and has not been evaluated on other speakers.
 
 Folders are searched recursively. The table columns are path, label, fake score, and number of one-second windows.
 
 ```bash
-export AUDIODEEPFAKE_MODEL=your-name/distilhubert-deepfake
-audiodeepfake-detect speech.wav
+export AUDIODEEPFAKE_MODEL=your-org/your-detector
+audiodeepfake-detect speech.wav --model your-org/your-detector
 ```
 
 Exit codes: `0` finished, `1` at least one file could not be read, `2` missing model or bad arguments, `3` with `--fail-on-fake` when any file is labeled fake.
@@ -57,12 +76,14 @@ Python:
 ```python
 from audiodeepfake import detect
 
-result = detect("speech.wav", model="your-name/distilhubert-deepfake")
+result = detect("speech.wav")
 print(result.label, round(result.score, 3))
 
-for item in detect("clips/", model="your-name/distilhubert-deepfake"):
+for item in detect("clips/"):
     print(item.path, item.label, round(item.score, 3))
 ```
+
+`detect(..., model="your-org/your-detector")` loads a different Hub repo or a local folder.
 
 `detect("file.wav")` returns one result. `detect("folder/")` and `detect(["a.wav", "b.wav"])` return a list.
 
@@ -70,7 +91,7 @@ Audio is resampled to 16 kHz. Each full second is scored on its own. The file sc
 
 Use the same `--segment-seconds` you trained with. The default is `1`, because the notebook set `max_length=16000` samples. The notebook file name says `5s`. The code did not.
 
-If you have not trained a model yet, the command stops and tells you how to train. It does not download the backbone and invent a score.
+Passing `ntu-spml/distilhubert` stops the command. That id is the training backbone, not a detector. The command does not invent a score from it.
 
 ## Train
 
@@ -231,6 +252,8 @@ WaveFake's generated audio is CC BY-SA 4.0. LJSpeech has its own license. Neithe
 audiodeepfake-detect speech.wav --model your-name/distilhubert-deepfake
 ```
 
+The published example above is the default. Your own Hub id replaces it the same way.
+
 `audiodeepfake-eval` prints accuracy and fake-class precision, recall, and F1 for **this** run only. Add `--window` to score the same first second that training saw. The default scores every full second, which is what the CLI does.
 
 ```bash
@@ -242,15 +265,14 @@ audiodeepfake-eval \
 
 ## Gradio demo
 
-[`app.py`](app.py) is a small Space app. It loads the model on the first click.
+[`app.py`](app.py) is a small Space app. It loads the model on the first click. The default is `lightk/audiodeepfake-detecter-laogao`. The page says that this checkpoint was fine-tuned on one speaker (`laogao`) and has not been evaluated on other speakers.
 
 ```bash
 pip install -e ".[demo]"
-export AUDIODEEPFAKE_MODEL=your-name/distilhubert-deepfake
 python app.py
 ```
 
-On a new Hugging Face Space (Gradio SDK), this repo's [`requirements.txt`](requirements.txt) installs the package and Gradio. Set the Space variable `AUDIODEEPFAKE_MODEL` to the model id. Until that variable is set, the page explains how to train. It does not pretend the base model can detect anything.
+Set `AUDIODEEPFAKE_MODEL` before launch when you want a different repo. On a new Hugging Face Space (Gradio SDK), this repo's [`requirements.txt`](requirements.txt) installs the package and Gradio. Leave `AUDIODEEPFAKE_MODEL` unset to use the published default, or set it to another fine-tuned model id. The base checkpoint `ntu-spml/distilhubert` is still rejected.
 
 ## Development
 
@@ -272,7 +294,7 @@ tests/                pytest, no weight download
 
 ## Limitations
 
-- There is no published detector checkpoint in this release. You must train or supply one.
+- The published checkpoint `lightk/audiodeepfake-detecter-laogao` was trained on ASVspoof and then fine-tuned on one speaker (`laogao`). It has not been evaluated on other speakers. Do not treat its score as a result for a new voice. This project does not publish an accuracy number for it.
 - The default crop is one second. A model trained at a different length will not match these scores.
 - Windows do not overlap. A short tail is ignored. Padding can change the score of a very short clip.
 - A model trained on one set of vocoders often fails on a new vocoder, a new language, telephone audio, or heavy compression. In-the-Wild exists because lab models often do not travel.
@@ -290,7 +312,15 @@ A public detector can also be studied by people who build synthesizers. The code
 
 這個專案把 DistilHuBERT 微調成一個分類器，用來判斷一段語音比較像真人，還是像 AI 合成的語音（深偽語音）。
 
-目前**沒有**附上已經訓練好的權重，也**沒有**公布準確率。`ntu-spml/distilhubert` 只是訓練的起點，不能直接拿來偵測。
+### 預訓練模型
+
+預設模型是 [`lightk/audiodeepfake-detecter-laogao`](https://huggingface.co/lightk/audiodeepfake-detecter-laogao)。
+
+它是 Transformers 的 `HubertForSequenceClassification`（DistilHuBERT 設定）。標籤是 `0 = fake`（合成）、`1 = real`（真人）。倉庫裡也有 `preprocessor_config`。
+
+訓練過程：先用 ASVspoof 微調，再用一位講者（`laogao`）的錄音繼續微調。所以這個模型只針對這一位講者，**沒有**在其他講者上評估過，也**沒有**公布準確率。不要把它的分數當成對陌生聲音的一般判斷。
+
+`ntu-spml/distilhubert` 只是訓練的起點，不能直接拿來偵測。
 
 安裝（在這個資料夾裡）：
 
@@ -298,7 +328,13 @@ A public detector can also be studied by people who build synthesizers. The code
 pip install -e ".[dev,train,demo]"
 ```
 
-訓練後偵測：
+直接偵測（會下載上面的預設模型）：
+
+```bash
+audiodeepfake-detect speech.wav
+```
+
+換自己的模型時：
 
 ```bash
 audiodeepfake-detect speech.wav --model 你的帳號/你的模型

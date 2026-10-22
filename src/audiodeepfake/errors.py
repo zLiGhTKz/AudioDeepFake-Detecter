@@ -22,10 +22,8 @@ class DatasetLayoutError(AudioDeepfakeError):
 
 
 MISSING_MODEL_HELP = (
-    "No fine-tuned model id was given. This package does not ship "
-    "deepfake-detection weights. Train with audiodeepfake-train, upload the "
-    "output folder to the Hugging Face Hub, then pass that repo id with "
-    "--model or the AUDIODEEPFAKE_MODEL environment variable. "
     "ntu-spml/distilhubert is only the backbone used for training. "
-    "It cannot detect deepfakes on its own."
+    "It cannot detect deepfakes. The default detector is "
+    "lightk/audiodeepfake-detecter-laogao. Pass that id, or another fine-tuned "
+    "repo, with --model or the AUDIODEEPFAKE_MODEL environment variable."
 )

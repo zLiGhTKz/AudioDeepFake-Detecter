@@ -5,15 +5,11 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from audiodeepfake.errors import (
-    MISSING_MODEL_HELP,
-    AudioDeepfakeError,
-    ModelNotConfigured,
-    UntrainedModelError,
-)
+from audiodeepfake.errors import MISSING_MODEL_HELP, AudioDeepfakeError, UntrainedModelError
 from audiodeepfake.labels import ID2LABEL, LABEL2ID
 
 DEFAULT_BACKBONE = "ntu-spml/distilhubert"
+DEFAULT_MODEL_ID = "lightk/audiodeepfake-detecter-laogao"
 ENV_MODEL_ID = "AUDIODEEPFAKE_MODEL"
 
 IMPLICIT_LABEL_WARNING = (
@@ -24,13 +20,17 @@ IMPLICIT_LABEL_WARNING = (
 
 
 def resolve_model_id(model_id: str | None) -> str:
-    """Use the argument, then ``AUDIODEEPFAKE_MODEL``. Empty means unset."""
+    """Use the argument, then ``AUDIODEEPFAKE_MODEL``, then the published default.
+
+    An empty string counts as unset, so a blank environment variable still
+    selects :data:`DEFAULT_MODEL_ID`.
+    """
     if model_id is not None and str(model_id).strip():
         return str(model_id).strip()
     env_value = os.environ.get(ENV_MODEL_ID, "").strip()
     if env_value:
         return env_value
-    raise ModelNotConfigured(MISSING_MODEL_HELP)
+    return DEFAULT_MODEL_ID
 
 
 def is_base_backbone(model_id: str) -> bool:

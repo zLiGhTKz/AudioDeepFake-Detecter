@@ -29,3 +29,7 @@ def test_readme_does_not_copy_private_plot_numbers():
     assert "ASVspoof" in readme
     assert "WaveFake" in readme
     assert "In-the-Wild" in readme
+    assert "lightk/audiodeepfake-detecter-laogao" in readme
+    assert "laogao" in readme
+    assert "other speakers" in readme
+    assert "預訓練模型" in readme

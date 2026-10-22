@@ -11,6 +11,7 @@ from audiodeepfake import __version__
 from audiodeepfake.audio import collect_audio_files
 from audiodeepfake.detector import Detector
 from audiodeepfake.errors import AudioDeepfakeError
+from audiodeepfake.model import DEFAULT_MODEL_ID
 from audiodeepfake.results import DetectionResult
 
 
@@ -31,8 +32,9 @@ def build_parser() -> argparse.ArgumentParser:
         "-m",
         default=None,
         help=(
-            "Fine-tuned Hugging Face model id or local model folder. "
-            "Defaults to AUDIODEEPFAKE_MODEL."
+            "Hugging Face model id or a local model folder. "
+            f"Default: {DEFAULT_MODEL_ID}. "
+            "Override with this flag or AUDIODEEPFAKE_MODEL."
         ),
     )
     parser.add_argument(
