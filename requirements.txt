@@ -1,0 +1,3 @@
+# Used by a Hugging Face Space. The "." line installs this repository.
+.
+gradio>=4.44,<7

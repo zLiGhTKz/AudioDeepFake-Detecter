@@ -1,0 +1,69 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "audiodeepfake-detect"
+version = "0.1.0"
+description = "Detect AI-synthesized speech with a fine-tuned DistilHuBERT classifier."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "zLiGhTKz and contributors" }]
+keywords = ["audio", "deepfake", "speech", "distilhubert", "anti-spoofing"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Multimedia :: Sound/Audio :: Speech",
+]
+dependencies = [
+    "numpy>=1.24",
+    "torch>=2.2",
+    "transformers>=4.46,<6",
+    "librosa>=0.10",
+    "soundfile>=0.12",
+]
+
+[project.optional-dependencies]
+train = ["accelerate>=0.34"]
+demo = ["gradio>=4.44,<7"]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.6",
+    "accelerate>=0.34",
+]
+
+[project.urls]
+Homepage = "https://github.com/zLiGhTKz/AudioDeepFake-Detecter"
+Repository = "https://github.com/zLiGhTKz/AudioDeepFake-Detecter"
+Issues = "https://github.com/zLiGhTKz/AudioDeepFake-Detecter/issues"
+Changelog = "https://github.com/zLiGhTKz/AudioDeepFake-Detecter/blob/main/CHANGELOG.md"
+
+[project.scripts]
+audiodeepfake-detect = "audiodeepfake.cli:main"
+audiodeepfake-train = "audiodeepfake.training:main"
+audiodeepfake-eval = "audiodeepfake.evaluate:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+audiodeepfake = ["py.typed"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+src = ["src", "tests"]
+extend-exclude = ["notebooks"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "W"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
